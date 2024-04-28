@@ -41,7 +41,7 @@ while cap.isOpened():
             
 
     # 선택적: 프레임 출력
-    cv2.imshow('Frame', det)
+    cv2.imshow('Frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 

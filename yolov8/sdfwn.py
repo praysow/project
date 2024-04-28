@@ -3,7 +3,7 @@
         data (torch.Tensor): The raw tensor containing detection boxes and their associated data.
         orig_shape (tuple): The original image size as a tuple (height, width), used for normalization.
         is_track (bool): Indicates whether tracking IDs are included in the box data.
-
+    boxes
     Properties:
         xyxy (torch.Tensor | numpy.ndarray): Boxes in [x1, y1, x2, y2] format.
         conf (torch.Tensor | numpy.ndarray): Confidence scores for each box.
@@ -34,11 +34,4 @@
     masks = r.masks  # Masks object for segment masks outputs
     probs = r.probs  # Class probabilities for classification outputs
 
-
-                # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-                # label = f'{det.names[i]}'
-                # if det.probs is not None:
-                #     label += f': {det.probs[i]:.2f}'  # 클래스 이름과 확률을 표시
-                # cv2.putText(frame, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                # print(x_center2, y_center2)
 '''

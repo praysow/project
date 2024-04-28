@@ -63,7 +63,7 @@ def train(epoch):
         loss.backward()
         optimizer.step()
 
-        if (i+1) % 100 == 0:
+        if (i+1) % 10 == 0:
             print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
 
 # 평가
@@ -80,7 +80,7 @@ def evaluate():
             correct += (predicted == labels).sum().item()
     print(f'Test Accuracy: {100 * correct / total:.2f}%')
 
-num_epochs = 5
+num_epochs = 1
 for epoch in range(num_epochs):
     train(epoch)
     evaluate()

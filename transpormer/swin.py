@@ -56,7 +56,7 @@ def test_model(model, test_loader):
     print(f'Accuracy: {100 * correct / total}%')
 
 # 학습 및 테스트
-num_epochs = 5
+num_epochs = 1
 for epoch in range(num_epochs):
     print(f'Epoch {epoch+1}/{num_epochs}')
     train_model(model, train_loader)
