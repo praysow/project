@@ -8,8 +8,8 @@ import os
 if not os.path.exists('images'):
     os.makedirs('images')
 
-# 네이버 이미지 검색 URL
-url = 'https://search.naver.com/search.naver?ssc=tab.image.all&where=image&sm=tab_jum&query=%EB%B3%B4%ED%96%89%EC%9E%90+%EC%8B%A0%ED%98%B8%EB%93%B1'
+# 검색 URL
+url = '이미지 주소'
 
 # 웹 드라이버 시작
 driver = webdriver.Chrome()
@@ -19,9 +19,9 @@ driver.get(url)
 
 # 스크롤을 내려 더 많은 이미지 로드
 for i in range(10):
-    # 스크롤을 1초 동안 내림
+    # 스크롤 내리는 시간
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(2)
+    time.sleep(1)
 
 # 페이지 소스 가져오기
 page_source = driver.page_source
