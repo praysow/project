@@ -21,7 +21,7 @@ driver.get(url)
 for i in range(10):
     # 스크롤 내리는 시간
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(1)
+    time.sleep(2)
 
 # 페이지 소스 가져오기
 page_source = driver.page_source
