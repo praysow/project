@@ -1,11 +1,11 @@
 import torch
-import torchvision
-from torchvision.models.detection import maskrcnn_resnet50_fpn
-from torchvision.transforms import functional as F
-from PIL import Image, ImageDraw
+from torchvision.models.detection import maskrcnn_resnet50_fpn_v2
+import torchvision.transforms.functional as F
+from PIL import Image
 import numpy as np
 import cv2
 import random
+
 # COCO 클래스
 COCO_INSTANCE_CATEGORY_NAMES = [
     '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
@@ -23,8 +23,9 @@ COCO_INSTANCE_CATEGORY_NAMES = [
 ]
 
 # Mask R-CNN 모델 불러오기
-model = maskrcnn_resnet50_fpn(pretrained=True)
+model = maskrcnn_resnet50_fpn_v2(pretrained=True)
 model.eval()
+
 
 def predict(image_path):
     img = Image.open(image_path)
@@ -35,36 +36,41 @@ def predict(image_path):
 
 
 def visualize(image_path, predictions):
-    img = Image.open(image_path)
-    draw = ImageDraw.Draw(img)
+    img = cv2.imread(image_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     for score, label, mask, box in zip(predictions[0]['scores'], predictions[0]['labels'], predictions[0]['masks'],
                                        predictions[0]['boxes']):
         if score > 0.5:
-            # 객체 마다 다른 색으로 표시
             color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-            # 바운딩 박스 그리기
-            draw.rectangle([(box[0], box[1]), (box[2], box[3])], outline=color, width=10)
 
-            # 마스크 그리기
             mask = mask[0, :, :].numpy()
-            mask = np.array(mask * 100, dtype=np.uint8)
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            for contour in contours:
-                draw.polygon([(point[0][0], point[0][1]) for point in contour.tolist()], outline=color, fill=None, width=10)
+            mask = (mask > 0.5).astype(np.uint8)  # 이진화 처리
+
+            # 마스크를 반투명하게 적용
+            mask_img = img.copy()  # 원본 이미지의 복사본 생성
+            mask_img[mask == 1] = (mask_img[mask == 1] * 0.5 + np.array(color) * 0.5).astype(np.uint8)
+
+            img[mask == 1] = mask_img[mask == 1]  # 반투명 마스크 영역 적용
+
+            # 바운딩 박스 그리기
+            start_point = (int(box[0]), int(box[1]))
+            end_point = (int(box[2]), int(box[3]))
+            cv2.rectangle(img, start_point, end_point, color, 3)
 
             # 클래스 이름 표시
-            draw.text((box[0], box[1]), COCO_INSTANCE_CATEGORY_NAMES[label], fill='red')
+            cv2.putText(img, COCO_INSTANCE_CATEGORY_NAMES[label], (int(box[0]), int(box[1] - 10)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
+    # 이미지 출력
+    img = Image.fromarray(img)
     img.show()
 
 
-# 이미지 경로 설정
-image_path = '/home/aia/yolo/data/images/bus.jpg'
-
+# 이미지 경로 설정 및 예측 수행
+image_path = '/home/aia/yolo_sw/img/123.jpg'
 # 예측 수행
 predictions = predict(image_path)
 
 # 시각화
 visualize(image_path, predictions)
-
