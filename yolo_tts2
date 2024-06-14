@@ -1,0 +1,104 @@
+from ultralytics import YOLO
+import cv2
+import pyttsx3
+import streamlit as st
+# YOLO 모델 로드
+model = YOLO('c:/project/web/best.pt')
+model.model.names = ['빨간불', '초록불', '빨간불', '초록불', '자전거', '킥보드', '라바콘', '횡단보도']
+engine = pyttsx3.init()
+engine.setProperty('rate',200)
+# 비디오 파일 로드
+def filter_detections_by_class(detections, classes):
+    filtered_results = []
+    for det in detections:
+        boxes = det.boxes
+        for i in range(len(boxes.xyxy)):
+            cls_id = int(boxes.cls[i])
+            if cls_id < len(model.model.names):  # Ensure cls_id is within bounds
+                label = model.model.names[cls_id]
+                if label in classes:
+                    filtered_results.append({
+                        'box': boxes.xyxy[i].tolist(),
+                        'label': label,
+                        'confidence': boxes.conf[i].item()
+                    })
+    return filtered_results
+
+def detect_objects_in_video(video_path, desired_classes):    
+    cap = cv2.VideoCapture(video_path)
+
+# 프레임별로 처리
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # YOLO를 사용하여 프레임에서 객체 탐지
+        results = model.predict(frame, conf=0.5)
+        # filtered_results = filter_detections_by_class(results, desired_classes)
+        names = model.names  # 클래스 이름 목록
+
+        # 탐지된 객체들을 순회하면서
+        for result in results:
+            boxes = result.boxes
+            for i in range(len(boxes)):
+                x1, y1, x2, y2 = boxes.xyxy[i].tolist()
+                cls_id = int(boxes.cls[i])  # 클래스 번호
+                cls_name = names[cls_id]  # 클래스 이름q
+
+                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+                label = str(f"{cls_name}")
+                cv2.putText(frame, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+                x_center1 = (x1 + x2) / 2
+                y_center1 = (y1 + y2) / 2
+
+                if x_center1 < 720 / 3:
+                    x_center2 = '좌'
+                elif 720 / 3 <= x_center1 < 720/3+720/3:
+                    x_center2 = '중'
+                else:
+                    x_center2 = '우'
+
+                if y_center1 < 1200 / 3:
+                    y_center2 = '상'
+                elif 1200 / 3 <= y_center1 < 1200/3+1200/3:
+                    y_center2 = '중앙'
+                else:
+                    y_center2 = '하'
+
+                location = f"{x_center2} {y_center2}"
+                print(f"{location}, {label}")
+                engine.say(f"{location}, {label}")
+                engine.runAndWait()
+
+        # 프레임 출력
+        cv2.imshow('Frame', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+st.title("YOLO Object Detection App")
+
+video_source = st.radio("비디오 소스 선택", ('캠코더', '비디오 파일'))
+
+if video_source == '비디오 파일':
+    video_file = st.file_uploader("비디오 파일 업로드", type=["mp4", "mov", "avi"])
+    if video_file:
+        with open("temp_video.mp4", "wb") as f:
+            f.write(video_file.getbuffer())
+        st.success("비디오 파일 업로드 완료")
+
+classes = st.text_input("탐지할 클래스 입력 (예: 횡단보도, 빨간불)", "")
+
+if st.button("탐지 시작"):
+    desired_classes = [cls.strip() for cls in classes.split(",")]
+    if video_source == '캠코더':
+        detect_objects_in_video(0, desired_classes)  # 0은 웹캠을 의미
+    else:
+        detect_objects_in_video("temp_video.mp4", desired_classes)
+
+# 음성 출력 스레드 종료
+print("Processing complete.")
